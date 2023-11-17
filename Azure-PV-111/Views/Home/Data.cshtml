@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Data";
+}
+<h1 class="display-4">Робота з даними</h1>
+<p>
+    Робота з даними - забезпечення їх повного життєвого циклу CRUD.
+    Основна задача - збереження даних. Для цього існує декілька підходів.
+</p>
+<ul>
+    <li>Оперативна пам'ять</li>
+    <li>Файли</li>
+    <li>Бази даних</li>
+</ul>
+<div class="row">
+    <div class="col">
+        <h3>RAM</h3>
+        @foreach (String str in (ViewData["data"] as List<String>))
+        {
+            <div class="alert alert-secondary" role="alert">
+                @str
+            </div>
+        }
+    </div>
+    <div class="col">
+        <h3>File</h3>
+    </div>
+    <div class="col">
+        <h3>DB</h3>
+    </div>
+</div>
