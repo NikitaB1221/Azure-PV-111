@@ -1,0 +1,57 @@
+﻿@using Azure_PV_111.Models.Home.ImageSearch;
+@model HomeImageSearchViewModel
+@{
+    ViewData["Title"] = "ImageSearch";
+}
+<h1>Когнитивные сервисы на примере поиска изображений</h1>
+<p>
+
+</p>
+<form class="row g-3">
+    <div class="col-auto">
+        Введите  что искать:
+    </div>
+    <div class="col-auto">
+        <label for="inputSearch" class="visually-hidden">Фрагмент</label>
+        <input type="text"
+               class="form-control"
+               id="inputSearch"
+               name="search"
+               placeholder="Поисковый порядок"
+               value=" ">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary mb-3">Поиск</button>
+    </div>
+</form>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" asp-action="Search">Web pages</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Images</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+@if (Model.SearchResponse != null)
+{
+    <p>По запросу @(Model.SearchResponse.queryContext.originalQuery) обнаруженно @(Model.SearchResponse.totalEstimatedMatches) результатов</p>
+
+    foreach (var value in Model.SearchResponse.value)
+    {
+       <img src="@(value.thumbnailUrl)"/> 
+    }
+}
+
+<p>
+    @Model.ErrorMessage
+</p>

@@ -21,22 +21,82 @@
                value=" ">
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-primary mb-3">Пошук</button>
+        <button type="submit" class="btn btn-primary mb-3">Поиск</button>
     </div>
 </form>
-<p>
-    @Model.ErrorMessage
-</p>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Web pages</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-action="ImageSearch">Images</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
 @if (Model.WebSearchResponse != null)
 {
     <p>По запросу @(Model.WebSearchResponse.queryContext.originalQuery) обнаруженно @(Model.WebSearchResponse.webPages.totalEstimatedMatches) страниц</p>
+    for (int i = 1; i < 10; i++)
+    {
+        if (i == Model.page)
+        {
+            <b>@i</b>
+        }
+        else
+        {
+            <a href="?page=@i&search=@(Model.WebSearchResponse.queryContext.originalQuery)">@i</a>
+        }
+    }
+
+    @* <h6>@Model.page, @Model.offset</h6> *@
+
     @foreach (var value in Model.WebSearchResponse.webPages.value)
     {
-        
-        <p>
-            <i>@value.displayUrl</i><br/>
+
+        <div>
+            <i> @value.displayUrl</i><br />
             <a href=(@value.url)>@value.name</a>
             <p class="text-muted">@value.snippet</p>
-        </p>
+            <h7>Deep Links:</h7>
+            @if (value.deepLinks != null && value.deepLinks.Any())
+            {
+                <ul>
+                    @foreach (var link in value.deepLinks)
+                    {
+                        <li><a href="@link.url">@link.name</a></li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>No deep links available.</p>
+            }
+        </div>
     }
+
+    for (int i = 1; i < 10; i++)
+    {
+        if (i == Model.page)
+        {
+            <b>@i</b>
+        }
+        else
+        {
+            <a href="?page=@i&search=@(Model.WebSearchResponse.queryContext.originalQuery)">@i</a>
+        }
+    }
+
+    <p>
+        @Model.ErrorMessage
+    </p>
 }

@@ -1,5 +1,6 @@
 ﻿using Azure_PV_111.Middleware;
 using Azure_PV_111.Models;
+using Azure_PV_111.Models.Home.ImageSearch;
 using Azure_PV_111.Models.Home.Search;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -30,18 +31,25 @@ namespace Azure_PV_111.Controllers
             return View();
         }
 
-        public IActionResult Search(String? search)
+        public IActionResult Search(String? search, int? page)
         {
             HomeSearchViewModel model = new HomeSearchViewModel();
 
             if (!String.IsNullOrEmpty(search))
             {
+                page ??= 1;
+                int count = 20;
+                int offset = (page.Value - 1) * count;
+
+                model.offset = offset;
+                model.page = page.Value;
+
                 String? endpoint = _configuration.GetSection("Search").GetSection("Endpoint").Value;
                 String? key = _configuration.GetSection("Search").GetSection("Key").Value;
                 String? location = _configuration.GetSection("Search").GetSection("Location").Value;
                 if (endpoint != null && key != null && location != null)
                 {
-                    endpoint += "v7.0/search?q=" + Uri.EscapeDataString(search);
+                    endpoint += $"v7.0/search?mkt=en-En&count={count}&offset={offset}&q=" + Uri.EscapeDataString(search);
                     using HttpClient client = new HttpClient();
                     client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", key);
                     String content = client.GetStringAsync(endpoint).Result;
@@ -55,6 +63,36 @@ namespace Azure_PV_111.Controllers
                 }
             }
 
+            return View(model);
+        }
+
+
+        public ViewResult ImageSearch(String? search)
+        {
+            HomeImageSearchViewModel model = new();
+            if (!String.IsNullOrEmpty(search))  // є пошуковий запит
+            {
+                String? endpoint = _configuration.GetSection("Search").GetSection("Endpoint").Value;
+                String? key = _configuration.GetSection("Search").GetSection("Key").Value;
+                String? location = _configuration.GetSection("Search").GetSection("Location").Value;
+                if (endpoint != null && key != null && location != null)
+                {
+                    endpoint += $"v7.0/images/search?mkt=uk-UA&count={10}&offset={0}&q=" + Uri.EscapeDataString(search);
+                    using HttpClient httpClient = new();
+                    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", key);
+                    String content = httpClient.GetStringAsync(endpoint).Result;
+
+                    model.SearchResponse =
+                    JsonSerializer.Deserialize<ImageSearchResponse>(content);
+
+                    model.ErrorMessage = content;
+
+                }
+                else
+                {
+                    model.ErrorMessage = "Config load error";
+                }
+            }
             return View(model);
         }
 
