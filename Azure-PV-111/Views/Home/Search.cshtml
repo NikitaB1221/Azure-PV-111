@@ -1,0 +1,42 @@
+﻿@using Azure_PV_111.Models.Home.Search;
+@model HomeSearchViewModel
+@{
+    ViewData["Title"] = "Search";
+}
+<h1>Когнитивные сервисы на примере поиска</h1>
+<p>
+
+</p>
+<form class="row g-3">
+    <div class="col-auto">
+        Введите  что искать:
+    </div>
+    <div class="col-auto">
+        <label for="inputSearch" class="visually-hidden">Фрагмент</label>
+        <input type="text"
+               class="form-control"
+               id="inputSearch"
+               name="search"
+               placeholder="Поисковый порядок"
+               value=" ">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary mb-3">Пошук</button>
+    </div>
+</form>
+<p>
+    @Model.ErrorMessage
+</p>
+@if (Model.WebSearchResponse != null)
+{
+    <p>По запросу @(Model.WebSearchResponse.queryContext.originalQuery) обнаруженно @(Model.WebSearchResponse.webPages.totalEstimatedMatches) страниц</p>
+    @foreach (var value in Model.WebSearchResponse.webPages.value)
+    {
+        
+        <p>
+            <i>@value.displayUrl</i><br/>
+            <a href=(@value.url)>@value.name</a>
+            <p class="text-muted">@value.snippet</p>
+        </p>
+    }
+}

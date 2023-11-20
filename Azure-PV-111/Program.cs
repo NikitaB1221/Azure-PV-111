@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<DataMiddleware>();
 
+builder.Configuration.AddJsonFile("azuresettings.json");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
