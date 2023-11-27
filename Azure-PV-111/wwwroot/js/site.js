@@ -52,9 +52,11 @@ function switchClick() {
     console.log(" | 1I.V " + input.value + " | 1O.V " + output.value);
     console.log(" | 1LF.IT " + lang_from.selectedOptions[0].innerText + " | LT.IT " + lang_to.selectedOptions[0].innerText);
 
-    let tmp_lang_val = lang_to.selectedOptions[0].value;
-    lang_to.selectedOptions[0].value = lang_from.selectedOptions[0].value;
-    lang_from.selectedOptions[0].value = tmp_lang_val;
+    let tmp_lang_val = lang_to;
+    lang_to = lang_from;
+    lang_from = tmp_lang_val;
+
+
 
     tmp_lang_val = lang_to.selectedOptions[0].innerText;
     lang_to.selectedOptions[0].innerText = lang_from.selectedOptions[0].innerText;
