@@ -21,6 +21,8 @@ namespace Azure_PV_111.Controllers
         [HttpGet]
         public async Task<object> GetAsync([FromQuery]String text, [FromQuery]String from, [FromQuery]String to)
         {
+
+
             String? endpoint = _configuration.GetSection("Translator").GetSection("Endpoint").Value;
             String? key = _configuration.GetSection("Translator").GetSection("Key").Value;
             String? location = _configuration.GetSection("Translator").GetSection("Location").Value;
