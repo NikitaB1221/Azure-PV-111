@@ -1,0 +1,63 @@
+﻿@using System.Text.Json.Nodes
+@{
+    ViewData["Title"] = "Translator";
+    var Langs = (ViewData["Langs"] as JsonNode).AsObject()["translation"].AsObject().AsEnumerable();
+    Dictionary<String, String> scripts = new();
+    foreach (var item in (ViewData["langs"] as JsonNode).AsObject()["transliteration"]
+                                                        .AsObject().AsEnumerable())
+    {
+        scripts.Add(item.Key, item.Value.AsObject()["scripts"].AsArray()[0].AsObject()["code"].GetValue<String>());
+    }
+}
+<h1 class="display-4">Когнитивные сервисы в примере переводчика</h1>
+
+
+<div class="row">
+    <div class="col-5">
+        <select id="translator-lang-from" class="form-select" aria-label="Default select example">
+            @foreach (var item in Langs)
+            {
+                String value = item.Value.AsObject()["name"].GetValue<String>();
+                if (item.Key == "uk")
+                {
+                    <option value="@(item.Key)" selected>@value</option>
+                }
+                else
+                {
+                    <option value="@(item.Key)">@value</option>
+                }
+            }
+        </select>
+        <div class="mb-3">
+            <textarea id="translator-input" class="form-control" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="col-1 text-center">
+        <button class="btn btn-outline-secondary mb-1" id="translator-switch"><i class="bi bi-arrow-left-right"></i></button>
+        <button class="btn btn-outline-success mb-1" id="translator-translate"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button class="btn btn-outline-info mb-1" id="translator-transliterate"><i class="bi bi-spellcheck"></i></button>
+    </div>
+    <div class="col-5">
+        <select id="translator-lang-to" class="form-select" aria-label="Default select example">
+            @foreach (var item in Langs)
+            {
+                String value = item.Value.AsObject()["name"].GetValue<String>();
+                String scriptCode =
+                scripts.ContainsKey(item.Key)
+                ? scripts[item.Key]
+                : "";
+                if (item.Key == "en")
+                {
+                    <option value="@(item.Key)" selected data-script="@scriptCode">@value</option>
+                }
+                else
+                {
+                    <option value="@(item.Key)" data-script="@scriptCode">@value</option>
+                }
+            }
+        </select>
+        <div class="mb-3">
+            <textarea id="translator-output" class="form-control" disabled rows="3"></textarea>
+        </div>
+    </div>
+</div>

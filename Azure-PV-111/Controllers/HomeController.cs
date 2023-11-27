@@ -2,9 +2,13 @@
 using Azure_PV_111.Models;
 using Azure_PV_111.Models.Home.ImageSearch;
 using Azure_PV_111.Models.Home.Search;
+using Azure_PV_111.Models.Home.SpellCheck;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Azure_PV_111.Controllers
 {
@@ -22,6 +26,15 @@ namespace Azure_PV_111.Controllers
         public IActionResult Index()
         {
             ViewData["config"] = _configuration.GetSection("Search").GetSection("Endpoint").Value;
+            return View();
+        }
+
+        public ViewResult Translator()
+        {
+            using HttpClient client = new HttpClient();
+            ViewData["Langs"] = JsonSerializer.Deserialize<JsonNode>(
+                client.GetStringAsync("https://api.cognitive.microsofttranslator.com/languages?api-version=3.0")
+                .Result);
             return View();
         }
 
@@ -66,7 +79,6 @@ namespace Azure_PV_111.Controllers
             return View(model);
         }
 
-
         public ViewResult ImageSearch(String? search)
         {
             HomeImageSearchViewModel model = new();
@@ -91,6 +103,78 @@ namespace Azure_PV_111.Controllers
                 else
                 {
                     model.ErrorMessage = "Config load error";
+                }
+            }
+            return View(model);
+        }
+
+        public IActionResult NewsSearch(String? search, int? page)
+        {
+            //HomeImageSearchViewModel model = new();
+
+            if (!String.IsNullOrEmpty(search))
+            {
+                page ??= 1;
+                int count = 10;
+                int offset = (page.Value - 1) * count;
+
+                //model.offset = offset;
+                //model.page = page.Value;
+
+                String? endpoint = _configuration.GetSection("Search").GetSection("EndPoint").Value;
+                String? key = _configuration.GetSection("Search").GetSection("Key").Value;
+                String? location = _configuration.GetSection("Search").GetSection("Location").Value;
+
+                if (endpoint != null && key != null && location != null)
+                {
+                    endpoint += $"v7.0/news/search?textDecorations=true&textFormat=HTML&q=" + Uri.EscapeDataString(search);
+                    using HttpClient httpClient = new();
+                    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", key);
+                    String content = httpClient.GetStringAsync(endpoint).Result;
+                    ViewData["content"] = content;
+                    ViewData["Search"] = JsonSerializer.Deserialize<JsonNode>(content);
+
+                    //model.SearchResponse = JsonSerializer.Deserialize<ImageSearchResponse>(content);
+
+                }
+                else
+                {
+                    //model.ErrorMessage = "Config load error";
+                }
+            }
+            return View();
+        }
+
+        public ViewResult SpellCheck(String? phrase)
+        {
+            HomeSpellCheckViewModel model = new HomeSpellCheckViewModel();
+            if (!String.IsNullOrEmpty(phrase))
+            {
+                String? endpoint = _configuration.GetSection("Search").GetSection("Endpoint").Value;
+                String? key = _configuration.GetSection("Search").GetSection("Key").Value;
+                String? location = _configuration.GetSection("Search").GetSection("Location").Value;
+                if (endpoint != null && key != null && location != null)
+                {
+                    endpoint += $"v7.0/spellcheck?mkt=en-us&mode=proof";
+                    using HttpClient httpClient = new();
+                    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", key);
+                    var postContent = new StringContent(
+                    $"text={phrase}",
+                    System.Text.Encoding.UTF8,
+                    "application/x-www-form-urlencoded");
+
+                    String content =
+                    httpClient
+                    .PostAsync(endpoint, postContent)
+                    .Result
+                    .Content
+                    .ReadAsStringAsync()
+                    .Result;
+                    model.SpellCheckResponse = JsonSerializer.Deserialize<SpellCheckResponse>(content);
+                }
+                else 
+                {
+                    model.ErrorMessage = "Config Error";
                 }
             }
             return View(model);

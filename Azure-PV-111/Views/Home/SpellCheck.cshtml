@@ -1,0 +1,33 @@
+﻿@using Azure_PV_111.Models.Home.SpellCheck;
+@model HomeSpellCheckViewModel
+@{
+    ViewData["Title"] = "Spell";
+}
+<h1 class="display-4">Когнітивні сервіси на прикладі пошуку</h1>
+
+<form class="row g-3">
+    <div class="mb-3">
+        <label for="exampleFormControlTextarea1" class="form-label">Введіть текст</label>
+        <textarea name="phrase" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary mb-3">Перевірка</button>
+    </div>
+</form>
+
+@if (Model.SpellCheckResponse != null)
+{
+    foreach (var token in Model.SpellCheckResponse.flaggedTokens)
+    {
+        <p>
+            Ошибка: <b>@(token.token)</b>
+            <br />
+            Предложения:<b>
+                @foreach (var s in token.suggestions)
+                {
+                    @(s.suggestion + " ")
+                }
+            </b>
+        </p>
+    }
+}

@@ -1,9 +1,9 @@
-﻿@using Azure_PV_111.Models.Home.ImageSearch;
-@model HomeImageSearchViewModel
+﻿@using System.Text.Json.Nodes;
 @{
-    ViewData["Title"] = "ImageSearch";
+    ViewData["Title"] = "Search";
+    JsonNode rootNode = ViewData["Search"] as JsonNode;
 }
-<h1>Когнитивные сервисы на примере поиска изображений</h1>
+<h1>Когнитивные сервисы на примере поиска новостей</h1>
 <p>
 
 </p>
@@ -24,6 +24,7 @@
         <button type="submit" class="btn btn-primary mb-3">Поиск</button>
     </div>
 </form>
+
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,26 +36,27 @@
                     <a class="nav-link" asp-action="Search">Web pages</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Images</a>
+                    <a class="nav-link" asp-action="ImageSearch">Images</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" asp-action="NewsSearch">News</a>
+                    <a class="nav-link active" aria-current="page" href="#">News</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-@if (Model.SearchResponse != null)
+@ViewData["content"];
+<br />
+<br />
+@if (rootNode != null)
 {
-    <p>По запросу @(Model.SearchResponse.queryContext.originalQuery) обнаруженно @(Model.SearchResponse.totalEstimatedMatches) результатов</p>
 
-    foreach (var value in Model.SearchResponse.value)
+    @(rootNode["queryContext"]["originalQuery"].GetValue<String>())
+    @foreach (var value in (rootNode["value"].AsArray()))
     {
-       <img src="@(value.thumbnailUrl)"/> 
+        <p>
+            @Html.Raw(value["name"].GetValue<String>())
+        </p>
     }
 }
-
-<p>
-    @Model.ErrorMessage
-</p>
