@@ -28,7 +28,12 @@ namespace Azure_PV_111.Controllers
             String? location = _configuration.GetSection("Translator").GetSection("Location").Value;
             if (endpoint != null && key != null && location != null)
             {
-                endpoint += $"/translate?api-version=3.0&from={from}&to={to}";
+                endpoint += $"/translate?api-version=3.0&to={to}";
+                if (from != "auto")
+                {
+                    endpoint += $"&from={from}";
+                }
+                _logger.LogInformation("GetAsync request: {endpoint}", endpoint);
                 object[] body = new object[] { new { Text = text } };
                 var requestBody = JsonSerializer.Serialize(body);
 
