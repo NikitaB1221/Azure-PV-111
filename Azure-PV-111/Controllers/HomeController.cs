@@ -1,9 +1,11 @@
 ﻿using Azure_PV_111.Middleware;
 using Azure_PV_111.Models;
+using Azure_PV_111.Models.Home.Db;
 using Azure_PV_111.Models.Home.ImageSearch;
 using Azure_PV_111.Models.Home.Search;
 using Azure_PV_111.Models.Home.SpellCheck;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
@@ -41,6 +43,43 @@ namespace Azure_PV_111.Controllers
         public ViewResult Data()
         {
             ViewData["data"] = DataMiddleware.Data;
+            return View();
+        }
+
+        public async Task<ViewResult> Db()
+        {
+            String? endpoint = _configuration.GetSection("CosmosDb").GetSection("Endpoint").Value;
+            String? key = _configuration.GetSection("CosmosDb").GetSection("Key").Value;
+            String? databaseId = _configuration.GetSection("CosmosDb").GetSection("DatabaseId").Value;
+            String? containerId = _configuration.GetSection("CosmosDb").GetSection("ContainerId").Value;
+
+            CosmosClient cosmosClient = new(
+                endpoint, key, 
+                new CosmosClientOptions()
+                {
+                    ApplicationName = "Azure_PV111"
+                });
+            
+            Database database = await cosmosClient
+                .CreateDatabaseIfNotExistsAsync(databaseId);
+            
+            Container container = await database
+                .CreateContainerIfNotExistsAsync(containerId, "/partitionKey");
+
+            int rand = new Random().Next(100);
+
+            Models.Home.Db.Test data = new Models.Home.Db.Test()
+            {
+                Id = Guid.NewGuid().ToString(),
+                PartitionKey = rand.ToString(),
+                Data = $"Random {rand}"
+            };
+            
+            ItemResponse<Test> response = await container
+                .CreateItemAsync<Test>(data, new PartitionKey(data.PartitionKey));
+            
+            ViewData["code"] = response.StatusCode;
+            
             return View();
         }
 
@@ -172,7 +211,7 @@ namespace Azure_PV_111.Controllers
                     .Result;
                     model.SpellCheckResponse = JsonSerializer.Deserialize<SpellCheckResponse>(content);
                 }
-                else 
+                else
                 {
                     model.ErrorMessage = "Config Error";
                 }
