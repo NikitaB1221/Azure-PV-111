@@ -15,19 +15,14 @@
     </div>
 </form>
 
-@if (Model.SpellCheckResponse != null)
+@if(Model.SpellCheckResponse != null)
 {
-    foreach (var token in Model.SpellCheckResponse.flaggedTokens)
+    foreach(var tkn in Model.SpellCheckResponse.flaggedTokens)
     {
         <p>
-            Ошибка: <b>@(token.token)</b>
-            <br />
-            Предложения:<b>
-                @foreach (var s in token.suggestions)
-                {
-                    @(s.suggestion + " ")
-                }
-            </b>
+            Ошибка: <b>@(tkn.token)</b> (<b>@(tkn.offset)</b>)
+            Предложение: <b>@(String.Join(',',tkn.suggestions.Select(s => s.suggestion)))</b>
+            Вероятность: <b>@(String.Join(',',tkn.suggestions.Select(s => Math.Round(s.score,2))))</b>
         </p>
     }
 }

@@ -3,13 +3,11 @@
 @{
     ViewData["Title"] = "ImageSearch";
 }
-<h1>Когнитивные сервисы на примере поиска изображений</h1>
-<p>
-
-</p>
+<h1>Когнітивні сервіси на прикладі пошуку зображень</h1>
+<p></p>
 <form class="row g-3">
     <div class="col-auto">
-        Введите  что искать:
+        Введіть, що шукати:
     </div>
     <div class="col-auto">
         <label for="inputSearch" class="visually-hidden">Фрагмент</label>
@@ -17,11 +15,11 @@
                class="form-control"
                id="inputSearch"
                name="search"
-               placeholder="Поисковый порядок"
+               placeholder="Пошуковий запит"
                value=" ">
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-primary mb-3">Поиск</button>
+        <button type="submit" class="btn btn-primary mb-3">Пошук</button>
     </div>
 </form>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -47,11 +45,17 @@
 
 @if (Model.SearchResponse != null)
 {
-    <p>По запросу @(Model.SearchResponse.queryContext.originalQuery) обнаруженно @(Model.SearchResponse.totalEstimatedMatches) результатов</p>
+    <p>По запросу @(Model.SearchResponse.queryContext.originalQuery) найдено @(Model.SearchResponse.totalEstimatedMatches) результатов</p>
 
-    foreach (var value in Model.SearchResponse.value)
+    @foreach (var value in Model.SearchResponse.value)
     {
-       <img src="@(value.thumbnailUrl)"/> 
+        <div>
+            <img src="@(value.thumbnailUrl)" alt="Image" />
+            <p>@value.name</p>
+            <p>Сайт источник: <a href="@value.hostPageUrl" target="_blank">@value.hostPageUrl</a></p>
+            <p><a href="@value.contentUrl" target="_blank">Ссылка на картинку з полным розмером</a></p>
+        </div>
+        <hr />
     }
 }
 
