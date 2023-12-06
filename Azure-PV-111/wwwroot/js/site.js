@@ -26,13 +26,99 @@
     loadProducers();
 });
 
+
+function findProducerData(e) {
+    const idCarrier = e.target.closest('[producer-id]');
+    if (!idCarrier) throw "producer-id not found";
+    const producerId = idCarrier.getAttribute('producer-id');
+    const nameCarrier = idCarrier.querySelector('[data-name]');
+    return { producerId, nameCarrier, idCarrier };
+}
+function editProducerClick(e) {
+    const { producerId, nameCarrier, idCarrier } = findProducerData(e);
+    const newName = prompt("Enter new title", nameCarrier.innerText);
+    if (newName != nameCarrier.innerText && newName !== "" && newName !== null) {
+        fetch(`/api/db?producerId=${producerId}&newName=${newName}`, {
+            method: "PUT"})
+            .then(r => r.text())
+            .then(console.log);
+    }
+    else {
+        alert("Changes denied");
+    }
+    console.log("edit " + producerId + " " + nameCarrier.innerText);
+}
+
 function loadProducers() {
     const container = document.getElementById("db-producers-container");
     if (!container) return;
-    fetch("/api/db?type=Producer").then(r => r.json()).then(j =>
-    {
-        console.log(j)
-    });
+    fetch("/api/db?type=Producer").then(r => r.json())
+        .then(j => {
+            const table = document.createElement('table');
+            const tbody = document.createElement('tbody');
+            for (let item of j) {
+                let tr = document.createElement('tr');
+                tr.setAttribute('producer-id', item.id);
+                let td = document.createElement('td');
+                td.setAttribute('data-name', '');
+                let tn = document.createTextNode(item.name);
+                td.appendChild(tn);
+                tr.appendChild(td);
+                td = document.createElement('td');
+                let btn = document.createElement('button');
+                btn.classList.add('btn', 'btn-danger');
+                let i = document.createElement('i');
+                i.classList.add('bi', 'bi-trash3-fill');
+                btn.appendChild(i);
+                btn.addEventListener('click', deleteProducerClick);
+                td.appendChild(btn);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                // edit button
+                td = document.createElement('td');
+                btn = document.createElement('button');
+                btn.classList.add('btn', 'btn-warning');
+                // <i class="bi bi-pen-fill"></i>
+                i = document.createElement('i');
+                i.classList.add('bi', 'bi-pen-fill');
+                btn.appendChild(i);
+                btn.addEventListener('click', editProducerClick);
+                td.appendChild(btn);
+                tr.appendChild(td);
+            }
+            table.appendChild(tbody);
+            table.className = "table";
+            container.innerHTML = "";
+            container.appendChild(table);
+
+            console.log(j);
+        });
+    //container.innerText = j);
+}
+
+function deleteProducerClick(e) {
+    const idCarrier = e.target.closest('[producer-id]');
+    if (!idCarrier) throw "producer-id not found";
+    const producerId = idCarrier.getAttribute('producer-id');
+    const nameCarrier = idCarrier.querySelector('[data-name]');
+    if (confirm('Do you really want to delete ' + nameCarrier.innerText)) {
+        console.log("to delete " + producerId);
+        fetch(`/api/db?producerId=${producerId}`, {
+            method: "DELETE"
+        }).then(r => r.json())
+            .then(j => {
+                if (j.status == 204) {
+                    alert("Delete OK!");
+                    location.reload();
+
+                }
+                else {
+                    alert("Something gone wrong!");
+                }
+            });
+    }
+    //location.reload();
+
 }
 
 function addProducerClick() {
@@ -44,9 +130,11 @@ function addProducerClick() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({name: nameInput.value})
-        }).then(r => r.json()).then(console.log)
-    console.log(nameInput.value);
+            body: JSON.stringify({ name: nameInput.value })
+        }).then(r => r.json()).then(j => {
+            console.log(j),
+                location.reload()
+        });
 }
 
 let lastSelectionTimestamp = 0;
@@ -58,7 +146,7 @@ function onSelectionChange(e) {
         }
     }
     lastSelectionTimestamp = e.timeStamp;
-    delayedAction = setTimeout(translateSelection,1000);
+    delayedAction = setTimeout(translateSelection, 1000);
     //console.log(e);
     //console.log(document.getSelection().toString());
 }

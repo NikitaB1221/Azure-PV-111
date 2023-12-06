@@ -96,5 +96,21 @@ namespace Azure_PV_111.Controllers
             }
             return res;
         }
+
+        [HttpDelete]
+        public async Task<object> DeleteProducer( String producerId )
+        {
+            Container dbContainer = await GetDbContainer();
+            ItemResponse<ProducerDataModel> response = await 
+                dbContainer.DeleteItemAsync<ProducerDataModel>(producerId, 
+                new PartitionKey(ProducerDataModel.DataType));
+            return new { status = response.StatusCode };
+        }
+
+        [HttpPut]
+        public async Task<object> UpdateProducers(String producerId, string newNum)
+        {
+            return new { producerId, newNum };
+        }
     }
 }
