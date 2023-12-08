@@ -1,7 +1,9 @@
 ﻿using Azure_PV_111.Models.Home.Db;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json;
 
 namespace Azure_PV_111.Controllers
 {
@@ -10,11 +12,13 @@ namespace Azure_PV_111.Controllers
     public class DbController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<DbController> _logger; 
         private static Container? _container;
 
-        public DbController(IConfiguration configuration)
+        public DbController(IConfiguration configuration, ILogger<DbController> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -25,6 +29,7 @@ namespace Azure_PV_111.Controllers
             {
                 Id = Guid.NewGuid(),
                 Name = formModel.Name,
+                Products = new(),
             };
             ItemResponse<ProducerDataModel> response =
                 await dbContainer.CreateItemAsync<ProducerDataModel>(
@@ -98,19 +103,82 @@ namespace Azure_PV_111.Controllers
         }
 
         [HttpDelete]
-        public async Task<object> DeleteProducer( String producerId )
+        public async Task<object> DeleteProducer(String producerId)
         {
             Container dbContainer = await GetDbContainer();
-            ItemResponse<ProducerDataModel> response = await 
-                dbContainer.DeleteItemAsync<ProducerDataModel>(producerId, 
+            ItemResponse<ProducerDataModel> response = await
+                dbContainer.DeleteItemAsync<ProducerDataModel>(producerId,
                 new PartitionKey(ProducerDataModel.DataType));
             return new { status = response.StatusCode };
         }
 
         [HttpPut]
-        public async Task<object> UpdateProducers(String producerId, string newNum)
+        public async Task<object> UpdateProducer(String producerId, string newName)
         {
-            return new { producerId, newNum };
+            Container dbContainer = await GetDbContainer();
+            ItemResponse<ProducerDataModel> response = await
+                dbContainer.ReadItemAsync<ProducerDataModel>(
+                    producerId,
+                    new PartitionKey(ProducerDataModel.DataType));
+
+            ProducerDataModel producer = response.Resource;
+
+            producer.Name = newName;
+
+            response = await dbContainer.ReplaceItemAsync<ProducerDataModel>(
+                producer, producerId,
+                new PartitionKey(ProducerDataModel.DataType));
+
+            return new { status = response.StatusCode };
+        }
+
+        public async Task<object> NonStdRouter()
+        {
+            _logger.LogInformation("NonStdRouter method {method}",HttpContext.Request.Method);
+
+            return HttpContext.Request.Method switch{
+                "LINK" => await LinqGet(),
+                "ADD" => await AddProduct(),
+                _ => new {HttpContext.Request.Method}
+            };
+        }
+
+        private async Task<object> LinqGet()
+        {
+            Container dbContainer = await GetDbContainer();
+            return dbContainer.GetItemLinqQueryable<ProducerDataModel>(true)
+                .Where(item => item.Type == ProducerDataModel.DataType)
+                .ToList();
+        }
+
+        private async Task<object> AddProduct()
+        {
+            Container dbContainer = await GetDbContainer();
+            using StreamReader stream = new(HttpContext.Request.Body);
+            String body = await stream.ReadToEndAsync();
+            var product =
+                JsonConvert.DeserializeObject<ProductFormModel>(body);
+            var producer = dbContainer
+                .GetItemLinqQueryable<ProducerDataModel>(true).ToList()
+                .FirstOrDefault(p => p.Id == product.producerId);
+            if (producer.Products == null)
+            {
+                producer.Products = new();
+            }
+            producer.Products.Add(new()
+            {
+                Id = Guid.NewGuid(),
+                Name = product.Name,
+                Year = product.Year.ToString()
+            });
+
+            var response = await
+                dbContainer.ReplaceItemAsync<ProducerDataModel>(
+                    producer,
+                    producer.Id.ToString(),
+                    new PartitionKey(ProducerDataModel.DataType));
+
+            return new { status = response.StatusCode };
         }
     }
 }

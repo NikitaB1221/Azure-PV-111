@@ -23,9 +23,48 @@
         addProducerButton.addEventListener('click', addProducerClick);
     }
 
+    const linkButton = document.getElementById("db-button-link")
+    if (linkButton) {
+        linkButton.addEventListener('click', linkButtonClick);
+    }
+
+    const addProductButton = document.getElementById("db-add-product")
+    if (addProductButton) {
+        addProductButton.addEventListener('click', addProductClick);
+    }
+
     loadProducers();
 });
 
+function addProductClick() {
+    const productContainer = document.getElementById('db-product-container')
+    if (!productContainer) throw "#db-product-container not found";
+    const producerId = productContainer.getAttribute('data-producer-id');
+    if (!producerId) {
+        alert("Select producer");
+        return;
+    }
+    console.log(producerId);
+    const nameInput = document.querySelector('[name="db-product-name"]');
+    if (!nameInput) throw '[name="db-product-name"] not found';
+    const yearInput = document.querySelector('[name="db-product-year"]');
+    if (!yearInput) throw '[name="db-product-year"] not found';
+    fetch('/api/db', {
+        method: 'ADD',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            producerId: producerId,
+            name: nameInput.value,
+            year: yearInput.value
+        })
+    }).then(r => r.text()).then(console.log);
+}
+
+function linkButtonClick() {
+    fetch('/api/db', { method: 'LINK' }).then(r => r.text()).then(console.log);
+}
 
 function findProducerData(e) {
     const idCarrier = e.target.closest('[producer-id]');
@@ -40,8 +79,16 @@ function editProducerClick(e) {
     if (newName != nameCarrier.innerText && newName !== "" && newName !== null) {
         fetch(`/api/db?producerId=${producerId}&newName=${newName}`, {
             method: "PUT"})
-            .then(r => r.text())
-            .then(console.log);
+            .then(r => r.json())
+            .then(j => {
+                console.log(j);
+                if (j.status == 200) {
+                    nameCarrier.innerText = newName;
+                }
+                else {
+                    alert("Error while changing");
+                }
+            });
     }
     else {
         alert("Changes denied");
@@ -52,22 +99,35 @@ function editProducerClick(e) {
 function loadProducers() {
     const container = document.getElementById("db-producers-container");
     if (!container) return;
-    fetch("/api/db?type=Producer").then(r => r.json())
+    fetch("/api/db?type=Producer")
+        .then(r => r.json())
         .then(j => {
             const table = document.createElement('table');
             const tbody = document.createElement('tbody');
             for (let item of j) {
-                let tr = document.createElement('tr');
+                let tr, td, tn, btn, i, radio;
+                tr = document.createElement('tr');
                 tr.setAttribute('producer-id', item.id);
-                let td = document.createElement('td');
-                td.setAttribute('data-name', '');
-                let tn = document.createTextNode(item.name);
+
+                td = document.createElement('td');
+                td.setAttribute('name', '');
+                tn = document.createTextNode(item.name);
                 td.appendChild(tn);
                 tr.appendChild(td);
+
                 td = document.createElement('td');
-                let btn = document.createElement('button');
+                radio = document.createElement('input');
+                radio.setAttribute('type', 'radio');
+                radio.setAttribute('name', 'radio-producer');
+                radio.setAttribute('value', item.id);
+                radio.addEventListener('change', radioProducerChanged);
+                td.appendChild(radio);
+                tr.appendChild(td);
+
+                td = document.createElement('td');
+                btn = document.createElement('button');
                 btn.classList.add('btn', 'btn-danger');
-                let i = document.createElement('i');
+                i = document.createElement('i');
                 i.classList.add('bi', 'bi-trash3-fill');
                 btn.appendChild(i);
                 btn.addEventListener('click', deleteProducerClick);
@@ -96,6 +156,15 @@ function loadProducers() {
     //container.innerText = j);
 }
 
+
+function radioProducerChanged(e) {
+    loadProducts(e.target.value);
+}
+function loadProducts(producerId) {
+    const productsContainer = document.getElementById("db-product-container");
+    if (!productsContainer) throw ("#db-products-container not found");
+    productsContainer.setAttribute('data-producer-id', producerId);
+}
 function deleteProducerClick(e) {
     const idCarrier = e.target.closest('[producer-id]');
     if (!idCarrier) throw "producer-id not found";
