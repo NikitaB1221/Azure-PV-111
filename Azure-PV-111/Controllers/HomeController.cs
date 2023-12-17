@@ -31,6 +31,13 @@ namespace Azure_PV_111.Controllers
             return View();
         }
 
+        public ViewResult Maps()
+        {
+            return View();
+        }
+        private static String filesPath => (System.IO.Directory.Exists(@"C:\home\site\"))
+                    ? @"C:\home\site\Files\" : "./Files/";
+
         public ViewResult Translator()
         {
             using HttpClient client = new HttpClient();
@@ -42,7 +49,7 @@ namespace Azure_PV_111.Controllers
 
         public ViewResult Data()
         {
-            ViewData["data"] = DataMiddleware.Data;
+            ViewData["data"] = DataMiddleware.GetData();
             return View();
         }
 
@@ -50,6 +57,116 @@ namespace Azure_PV_111.Controllers
         {
             return View();
         }
+
+        public ViewResult Files()
+        {
+            String filename;
+            if (System.IO.Directory.Exists(@"C:\home\site\"))
+            {
+                filename = @"C:\home\site\";
+            }
+            else
+            {
+                filename = "./";
+            }
+            filename += "Files/";
+
+            String[] files = System.IO.Directory.GetFiles(filename);
+
+            for (int i = 0; i < files.Length; i++)
+            {
+                files[i] = Path.GetFileName(files[i]);
+            }
+            ViewData["files"] = files;
+
+            /*
+         if (System.IO.Directory.Exists(filename))
+         {
+             ViewData["dir-exists"] = "Exists";
+         }
+         else
+         {
+             ViewData["dir-exists"] = "Not Exists ";
+             try
+             {
+                 System.IO.Directory.CreateDirectory(filename);
+                 ViewData["dir-exists"] += "Created";
+             }
+             catch (Exception ex)
+             {
+                 ViewData["dir-exists"] += ex.Message;
+             }
+         }
+
+         filename += "file.txt";
+
+         if (System.IO.File.Exists(filename))
+         {
+             ViewData["exists"] = "Exists. " +
+                System.IO.File.ReadAllText(filename);
+         }
+         else
+         {
+             ViewData["exists"] = "Not Exists. ";
+             try
+             {
+                 System.IO.File.WriteAllText(filename, "Test Line 2");
+                 ViewData["exists"] += "Created";
+             }
+             catch (Exception ex)
+             {
+                 ViewData["exists"] += ex.Message;
+             }
+         }
+         */
+            if (HttpContext.Session.Keys.Contains("file-message"))
+            {
+                ViewData["file-message"] = HttpContext.Session.GetString("file-message");
+                HttpContext.Session.Remove("file-message");
+            }
+            return View();
+        }
+
+
+        public IActionResult FileDownloader(String filename)
+        {
+            String file = filesPath + filename;
+            if (System.IO.File.Exists(file))
+            {
+                return File(
+                        System.IO.File.ReadAllBytes(file),
+                        System.Net.Mime.MediaTypeNames.Application.Octet,
+                        filename
+                    );
+            }
+            return NotFound();
+        }
+        public IActionResult FileDeleter(String filename)
+        {
+            String file = filesPath + filename;
+            if (System.IO.File.Exists(file))
+            {
+                System.IO.File.Delete(file);
+                HttpContext.Session.SetString("file-message", "Successfuly deleted");
+                return RedirectToAction(nameof(Files));
+            }
+            return NotFound();
+        }
+        [HttpPost]
+        public RedirectToActionResult FileUploader(IFormFile uploaded)
+        {
+            if (uploaded != null && uploaded.Length > 0)
+            {
+                using Stream stream = System.IO.File.OpenWrite(filesPath + uploaded.FileName);
+                uploaded.CopyTo(stream);
+                HttpContext.Session.SetString("file-message", "Successfuly updated");
+            }
+            else HttpContext.Session.SetString("file-message", "Error while updating");
+
+            return RedirectToAction(nameof(Files));
+        }
+
+
 
         public IActionResult Search(String? search, int? page)
         {
@@ -189,7 +306,26 @@ namespace Azure_PV_111.Controllers
 
         public IActionResult Privacy()
         {
-            DataMiddleware.Data.Add("privacy visited");
+            DataMiddleware.Add("privacy visited");
+            String filename = "./privacy.txt";
+            if (System.IO.File.Exists(filename))
+            {
+                System.IO.File.AppendAllText(
+                    filename,
+                    $"\n{DateTime.Now}");
+            }
+            else
+            {
+                System.IO.File.WriteAllText(
+                                    filename,
+                                    $"{DateTime.Now}");
+            }
+            List<DateTime> dates = new();
+            foreach (String line in System.IO.File.ReadAllLines(filename))
+            {
+                dates.Add(DateTime.Parse(line));
+            }
+            ViewData["dates"] = dates;
             return View();
         }
 
