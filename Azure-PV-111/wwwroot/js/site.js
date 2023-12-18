@@ -78,7 +78,8 @@ function editProducerClick(e) {
     const newName = prompt("Enter new title", nameCarrier.innerText);
     if (newName != nameCarrier.innerText && newName !== "" && newName !== null) {
         fetch(`/api/db?producerId=${producerId}&newName=${newName}`, {
-            method: "PUT"})
+            method: "PUT"
+        })
             .then(r => r.json())
             .then(j => {
                 console.log(j);
@@ -159,11 +160,55 @@ function loadProducers() {
 
 function radioProducerChanged(e) {
     loadProducts(e.target.value);
+    showProducts();
 }
 function loadProducts(producerId) {
     const productsContainer = document.getElementById("db-product-container");
     if (!productsContainer) throw ("#db-products-container not found");
     productsContainer.setAttribute('data-producer-id', producerId);
+}
+
+function showProducts() {
+    const container = document.getElementById("db-product-container");
+    if (!container) return;
+    fetch("/api/db?type=Producer")
+        .then(r => r.json())
+        .then(j => {
+            const table = document.createElement('table');
+            const tbody = document.createElement('tbody');
+
+            j.forEach(producer => {
+                if (producer.products && Array.isArray(producer.products)) {
+                    producer.products.forEach(product => {
+                        let tr, td, tn;
+                        tr = document.createElement('tr');
+                        tr.setAttribute('product-id', product.id);
+
+                        // Product Name
+                        td = document.createElement('td');
+                        tn = document.createTextNode(product.name);
+                        td.appendChild(tn);
+                        tr.appendChild(td);
+
+                        // Year
+                        td = document.createElement('td');
+                        tn = document.createTextNode(product.year);
+                        td.appendChild(tn);
+                        tr.appendChild(td);
+
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+
+            table.appendChild(tbody);
+            table.className = "table";
+            container.innerHTML = "";
+            container.appendChild(table);
+
+            console.log(j);
+        })
+        .catch(error => console.error('Error fetching data:', error));
 }
 function deleteProducerClick(e) {
     const idCarrier = e.target.closest('[producer-id]');
@@ -225,21 +270,50 @@ function translateSelection() {
     const check2 = document.getElementById("transliterator-selection");
     let text = document.getSelection().toString().trim();
     let [_, lang_from, lang_to, output] = getTranslateData();
-    if (text.length > 0 && check.checked) {
+
+    let x;
+    let y;
+    const fromScript = lang_from.selectedOptions[0].getAttribute("data-script");
+    const toScript = "Latn";
+    if (text.length > 0 && check.checked && check2.checked) {
+        fetch(`/api/translate?text=${text}&from=${lang_from.value}&to=${lang_to.value}`, {
+            method: "GET"
+        })
+            .then(r => r.json())
+            .then(j => {
+                x = j[0].translations[0].text;
+                console.log(x);
+
+                // Второй запрос внутри первого
+                return fetch(`/api/translate?text=${text}&from=${lang_from.value}&fromScript=${fromScript}&toScript=${toScript}`, {
+                    method: "POST"
+                });
+            })
+            .then(r => r.json())
+            .then(j => {
+                y = j[0].text;
+                console.log(y);
+                alert(`${x}\n${y}`);
+                return;
+            });
+    }
+
+    else if (text.length > 0 && check.checked) {
         fetch(`/api/translate?text=${text}&from=${lang_from.value}&to=${lang_to.value}`)
             .then(r => r.json())
             .then(j => {
                 console.log(j);
                 output.value = j[0].translations[0].text;
+
             });
     }
     else if (check2.checked) {
-        const fromScript = lang_from.selectedOptions[0].getAttribute("data-script");
+
         if (!fromScript) {
             alert("Транслітерація цієї мови не підтримується");
             return;
         }
-        const toScript = "Latn";
+
         fetch(
             `/api/translate?text=${text}&from=${lang_from.value}&fromScript=${fromScript}&toScript=${toScript}`, {
             method: "POST"
@@ -248,6 +322,7 @@ function translateSelection() {
             .then(j => {
                 console.log(j);
                 alert(`${text} ==> ${j[0].text}`);
+
             });
     }
     delayedAction = undefined;
