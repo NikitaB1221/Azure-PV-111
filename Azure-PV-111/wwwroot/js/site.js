@@ -61,11 +61,9 @@ function addProductClick() {
         })
     }).then(r => r.text()).then(console.log);
 }
-
 function linkButtonClick() {
     fetch('/api/db', { method: 'LINK' }).then(r => r.text()).then(console.log);
 }
-
 function findProducerData(e) {
     const idCarrier = e.target.closest('[producer-id]');
     if (!idCarrier) throw "producer-id not found";
@@ -96,7 +94,6 @@ function editProducerClick(e) {
     }
     console.log("edit " + producerId + " " + nameCarrier.innerText);
 }
-
 function loadProducers() {
     const container = document.getElementById("db-producers-container");
     if (!container) return;
@@ -156,8 +153,6 @@ function loadProducers() {
         });
     //container.innerText = j);
 }
-
-
 function radioProducerChanged(e) {
     loadProducts(e.target.value);
     showProducts();
@@ -167,7 +162,6 @@ function loadProducts(producerId) {
     if (!productsContainer) throw ("#db-products-container not found");
     productsContainer.setAttribute('data-producer-id', producerId);
 }
-
 function showProducts() {
     const container = document.getElementById("db-product-container");
     if (!container) return;
@@ -234,7 +228,6 @@ function deleteProducerClick(e) {
     //location.reload();
 
 }
-
 function addProducerClick() {
     const nameInput = document.querySelector("input[name='db-producer']");
     if (!nameInput) throw "input[name='db-producer'] Not found";
@@ -328,7 +321,6 @@ function translateSelection() {
     delayedAction = undefined;
 
 }
-
 function getTranslateData() {
     const input = document.getElementById("translator-input");
     if (!input) throw "#transator-input bot found";
@@ -350,7 +342,6 @@ function getTranslateData() {
 
     return [text, lang_from, lang_to, output];
 }
-
 function switchClick() {
     let [text, lang_from, lang_to, output] = getTranslateData();
 
@@ -395,7 +386,6 @@ function switchClick() {
         });
     }
 }
-
 function translateClick() {
     let [text, langFrom, langTo, output] = getTranslateData();
     fetch(`/api/translate?text=${text}&from=${langFrom.value}&to=${langTo.value}`)
@@ -426,7 +416,6 @@ function translateClick() {
     // output.value = input.value + ' ' + langFrom.value + ' ' + langTo.value;
     // "translator-switch" "translator-lang-from" "translator-lang-to"
 }
-
 function transliterateClick() {
 
     let [_, __, lang_to, output] = getTranslateData();
